@@ -2,12 +2,19 @@ const express = require('express')
 const app = express()
 const cors = require('cors');
 require('dotenv').config();
+
+
+
 const admin = require("firebase-admin");
 const { MongoClient } = require('mongodb');
 const port = process.env.PORT || 5000;
 
 
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
 
 app.use(cors());
 app.use(express.json());
@@ -15,18 +22,80 @@ app.use(express.json());
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.wymui.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
 
+async function verifyToken(req, res, next){
+  if(req.headers?.authorization?.startsWith('Bearer ')){
+    const token = req.headers.authorization.split(' ')[1];
+
+    try{
+      const decodedUser = await admin.auth().verifyIdToken(token);
+      req.decodedEmail = decodedUser.email;
+    }
+    catch{
+
+    }
+  }
+  next();
+}
 
 
 async function run(){
   try{
     await client.connect();
-    console.log('database connected');
+    
     const database = client.db('Uddokta_Japan');
     const usersCollection = database.collection('users');
     const newsEventsCollection = database.collection('newsEvents');
-
-   
+    const emailCollection = database.collection('email');
     
+   
+
+    app.post('/email', async(req, res) => {
+      const email = req.body;
+      const result = await emailCollection.insertOne(email);
+      console.log(result);
+    })
+
+    app.put('/email', async(req, res) => {
+      const email = req.body;
+      const filter = {email: email.email};
+      const options = {upsert: true};
+      const updateDoc = {$set: email};
+      const result = await emailCollection.updateOne(filter, updateDoc, options)
+      res.json(result); 
+    })
+    
+
+    app.get('/email/:email', async(req,res)=> {
+      const email = req.params.email;
+      const query = {email: email};
+      const user = await emailCollection.findOne(query);
+      let isAdmin = false
+      if(user?.role === 'admin'){
+        isAdmin= true;
+      }
+      res.json({admin: isAdmin});
+
+    })
+
+    app.put('/email/admin',verifyToken, async(req, res)=> {
+      const user = req.body;
+      const requester = req.decodedEmail;
+      if(requester){
+        const requesterAccount = await emailCollection.findOne({email: requester})
+        if(requesterAccount.role === 'admin'){
+          const filter = {email: user.email};
+          const updateDoc = {$set : {role: 'admin'}};
+          const result = await emailCollection.updateOne(filter, updateDoc);
+          res.json(result);
+        }
+      }
+     
+       else{
+         res.status(403).json({message: 'You do not gave access to make admin'})
+       }
+    })
+
+
  app.get('/newsEvents', async(req, res) => {
    const cursor = newsEventsCollection.find({});
    const newsEvents = await cursor.toArray();
@@ -39,7 +108,12 @@ async function run(){
       const result = await usersCollection.insertOne(newUser)
      res.json(result);
    })
-
+  
+   app.get('/users', async(req, res) => {
+    const cursor = usersCollection.find({});
+    const subscriberUser = await cursor.toArray();
+    res.send(subscriberUser);
+  })
 
   
  
