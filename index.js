@@ -2,11 +2,12 @@ const express = require('express')
 const app = express()
 const cors = require('cors');
 require('dotenv').config();
-
+const ObjectId = require('mongodb').ObjectId;
 
 
 const admin = require("firebase-admin");
 const { MongoClient } = require('mongodb');
+const { ObjectID } = require('bson');
 const port = process.env.PORT || 5000;
 
 
@@ -46,6 +47,7 @@ async function run(){
     const usersCollection = database.collection('users');
     const newsEventsCollection = database.collection('newsEvents');
     const emailCollection = database.collection('email');
+    const blogsCollection = database.collection('blogs');
     
    
 
@@ -100,6 +102,21 @@ async function run(){
    const cursor = newsEventsCollection.find({});
    const newsEvents = await cursor.toArray();
    res.send(newsEvents);
+ })
+
+ app.get('/blogs', async(req, res) => {
+   const cursor = blogsCollection.find({});
+   const blogs = await cursor.toArray();
+   res.send(blogs);
+ })
+
+ app.get('/blogs/:id', async(req, res) => {
+  const id = req.params.id;
+  const query = {_id: ObjectId(id)};
+  const blog = await blogsCollection.findOne(query);
+  console.log('load usr with id:', id);
+  res.send(blog);
+
  })
    
    //post api 
