@@ -48,6 +48,7 @@ async function run(){
     const newsEventsCollection = database.collection('newsEvents');
     const emailCollection = database.collection('email');
     const blogsCollection = database.collection('blogs');
+    const initiatitivesCollection = database.collection('Initiatitives');
     
    
 
@@ -103,12 +104,24 @@ async function run(){
    const newsEvents = await cursor.toArray();
    res.send(newsEvents);
  })
+ app.get('/Initiatitives', async(req, res) => {
+   const cursor = initiatitivesCollection.find({});
+   const initiatitives = await cursor.toArray();
+   res.send(initiatitives);
+ })
 
  app.get('/blogs', async(req, res) => {
    const cursor = blogsCollection.find({});
    const blogs = await cursor.toArray();
    res.send(blogs);
  })
+
+ app.post('/blogs', async (req, res) => {
+  const blogs = req.body;
+  const result = await blogsCollection.insertOne(blogs);
+  console.log(result);
+  res.json(result);
+});
 
  app.get('/blogs/:id', async(req, res) => {
   const id = req.params.id;
@@ -118,7 +131,66 @@ async function run(){
   res.send(blog);
 
  })
-   
+ app.put('/blogs/:id', async(req, res) => {
+  const blogs = req.body;
+  const filter = {id: blogs._id};
+  const options = {upsert: true};
+  const updateDoc = {$set: blogs};
+  const result = await blogsCollection.updateOne(filter, updateDoc, options)
+  res.json(result);
+
+})
+//  app.get('/dashboard/editBlog', async(req, res) => {
+//   const id = req.params.id;
+//   const query = {_id: ObjectId(id)};
+//   const editblog = await blogsCollection.findOne(query);
+//   console.log('load usr with id:', id);
+//   res.send(editblog);
+
+//  })
+
+ app.delete('/blogs/:id', verifyToken, async(req, res) => {
+  const id = req.params.id;
+  console.log("delete",id);
+  const query = {_id : ObjectId(id)};
+  const result = await blogsCollection.deleteOne(query);
+  res.json(result);
+})
+
+
+ app.get('/newsEvents/:id', async(req, res) => {
+  const id = req.params.id;
+  const query = {_id: ObjectId(id)};
+  const newsEvent = await newsEventsCollection.findOne(query);
+ 
+  res.send(newsEvent);
+
+ })
+
+ app.get('/dashboard/editBlog', async(req, res)=> {
+  const cursor = blogsCollection.find({});
+  const dashBoardBlogs = await cursor.toArray();
+  res.send(dashBoardBlogs);
+ })
+
+ app.get('/dashboard/editBlog/editBlogPage/:id', async(req, res) => {
+  const id = req.params.id;
+  const query = {_id: ObjectId(id)};
+  const editedBlog = await blogsCollection.findOne(query);
+  res.send(editedBlog);
+
+ })
+
+
+ 
+//  app.get('/manageBlog/:id', async(req, res) => {
+//   const id = req.params.id;
+//   const query = {_id: ObjectId(id)};
+//   const manageBlog = await blogsCollection.findOne(query);
+ 
+//   res.send(manageBlog);
+
+//  })
    //post api 
    app.post('/users', async(req, res) => {
       const newUser = req.body;
