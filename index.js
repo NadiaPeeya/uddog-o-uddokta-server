@@ -162,7 +162,6 @@ async function run(){
   const id = req.params.id;
   const query = {_id: ObjectId(id)};
   const newsEvent = await newsEventsCollection.findOne(query);
- 
   res.send(newsEvent);
 
  })
