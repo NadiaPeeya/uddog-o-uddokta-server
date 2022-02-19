@@ -48,8 +48,11 @@ async function run(){
     const newsEventsCollection = database.collection('newsEvents');
     const emailCollection = database.collection('email');
     const blogsCollection = database.collection('blogs');
+    const donationCollection = database.collection('donation');
     const initiatitivesCollection = database.collection('Initiatitives');
     
+
+
    
 
     app.post('/email', async(req, res) => {
@@ -140,23 +143,30 @@ async function run(){
   res.json(result);
 
 })
-//  app.get('/dashboard/editBlog', async(req, res) => {
-//   const id = req.params.id;
-//   const query = {_id: ObjectId(id)};
-//   const editblog = await blogsCollection.findOne(query);
-//   console.log('load usr with id:', id);
-//   res.send(editblog);
 
-//  })
+app.post('/donation', async(req, res)=>{
+  const paymentInfo = req.body;
+  const amount = paymentInfo.price*100;
+  const paymentIntent = await stripe.paymentIntents.create({
+    currency: 'usd',
+    amount: amount,
+    payment_method_types: ['card']
+  });
+  res.json({clientSecret: paymentIntent.client_secret})
+})
 
- app.delete('/blogs/:id', verifyToken, async(req, res) => {
+
+
+
+
+
+app.delete('/blogs/:id', verifyToken, async(req,res) => {
   const id = req.params.id;
-  console.log("delete",id);
+  console.log("delete", id);
   const query = {_id : ObjectId(id)};
   const result = await blogsCollection.deleteOne(query);
   res.json(result);
 })
-
 
  app.get('/newsEvents/:id', async(req, res) => {
   const id = req.params.id;
