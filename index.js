@@ -160,13 +160,22 @@ app.post('/donation', async(req, res)=>{
 
 
 
-app.delete('/blogs/:id', verifyToken, async(req,res) => {
+// app.delete('/blogs/:id', verifyToken, async(req,res) => {
+//   const id = req.params.id;
+//   console.log("delete", id);
+//   const query = {_id : ObjectId(id)};
+//   const result = await blogsCollection.deleteOne(query);
+//   res.json(result);
+// })
+
+
+app.delete('/blogs/:id', verifyToken, async(req,res) =>{
   const id = req.params.id;
-  console.log("delete", id);
-  const query = {_id : ObjectId(id)};
+  const query = {_id : ObjectID(id)};
   const result = await blogsCollection.deleteOne(query);
   res.json(result);
 })
+
 
  app.get('/newsEvents/:id', async(req, res) => {
   const id = req.params.id;
