@@ -171,7 +171,6 @@ app.delete('/blogs/:id', verifyToken, async(req,res) => {
   res.json(result);
 })
 
-
  app.get('/newsEvents/:id', async(req, res) => {
   const id = req.params.id;
   const query = {_id: ObjectId(id)};
